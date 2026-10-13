@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>QSTT 음성 파이프라인 데이터 흐름</title>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans+KR:wght@400;500;600&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+  <script>
+    mermaid.initialize({
+      startOnLoad: true,
+      theme: 'base',
+      themeVariables: {
+        primaryColor: '#e0f2fe',
+        primaryTextColor: '#0f172a',
+        primaryBorderColor: '#0ea5e9',
+        lineColor: '#64748b',
+        secondaryColor: '#f1f5f9',
+        tertiaryColor: '#f8fafc'
+      }
+    });
+  </script>
+  <style>
+    :root {
+      --bg: #ffffff;
+      --border: #e2e8f0;
+      --accent-blue: #2563eb;
+      --text-primary: #0f172a;
+      --text-secondary: #475569;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      background: var(--bg);
+      color: var(--text-primary);
+      font-family: 'IBM Plex Sans KR', 'IBM Plex Mono', sans-serif;
+      min-height: 100vh;
+      line-height: 1.6;
+    }
+    .wrapper {
+      max-width: 1000px;
+      margin: 0 auto;
+      padding: 40px 24px 80px;
+    }
+    h2 {
+      font-size: 1.15rem;
+      font-weight: 600;
+      color: var(--accent-blue);
+      margin-bottom: 16px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid var(--border);
+    }
+    p {
+      font-size: 0.9rem;
+      color: var(--text-secondary);
+      margin-bottom: 20px;
+    }
+    .mermaid {
+      margin: 20px 0;
+      display: flex;
+      justify-content: center;
+    }
+    .mermaid svg {
+      max-width: 100%;
+    }
+  </style>
+</head>
+<body>
+  <div class="wrapper">
+    <h2>음성 파이프라인 데이터 흐름 (Voice Pipeline)</h2>
+    <p>클라이언트가 말하면 → STT → 번역 → (선택) TTS → 세션 전체에 브로드캐스트되는 흐름입니다.</p>
+    <div class="mermaid">
+sequenceDiagram
+    participant Client as 클라이언트 브라우저
+    participant FE as Frontend
+    participant WS as WebSocket
+    participant BE as Backend
+    participant STT as Google STT
+    participant Gemini as Gemini 번역
+    participant TTS as Google TTS
+    participant Counselor as 상담자 브라우저
+    Client->>FE: 마이크 PCM (AudioWorklet)
+    FE->>WS: type: audio_stream, data: base64
+    WS->>BE: WebSocket 메시지
+    BE->>STT: 스트리밍 음성
+    STT-->>BE: 인식 텍스트 (원문)
+    BE->>BE: DB에 메시지 저장 (선택)
+    BE->>Gemini: 원문 텍스트
+    Gemini-->>BE: 번역 텍스트
+    opt TTS 사용 시
+        BE->>TTS: 번역 텍스트
+        TTS-->>BE: MP3 base64
+    end
+    BE->>WS: broadcast to session
+    WS->>FE: transcription, translation_complete, tts_audio
+    FE->>Client: 화면 표시 + TTS 재생
+    FE->>Counselor: 동일 메시지 표시 (같은 세션)
+    </div>
+  </div>
+</body>
+</html>

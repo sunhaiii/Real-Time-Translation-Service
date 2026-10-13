@@ -1,0 +1,87 @@
+# API Keys and Credentials
+.env
+credentials.json
+*.pem
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+env/
+ENV/
+*.egg-info/
+dist/
+build/
+
+# Node
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+.pnp/
+.pnp.js
+
+# Next.js
+/.next/
+/out/
+.vercel
+*.tsbuildinfo
+next-env.d.ts
+
+# Testing
+/coverage
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+
+# Logs
+*.log
+logs/
+
+# Docker
+*.env.local
+
+# Office Files
+*.xls
+*.xlsx
+*.xlsm
+*.xlsb
+*.xltx
+*.xltm
+
+# useless files
+MIGRATION.md
+/app_root/frontend/.next/
+/app_root/frontend/node_modules/
+/app_root/frontend/scripts/.chrome-profiles/
+/app_root/frontend/scripts/launcher-expiry.generated.json
+
+.venv/
+out/
+
+Qstt/
+
+# 빌드 전용 비밀 키 파일 (git 제외)
+app_root/frontend/scripts/license-config.local.js
+
+fleurs_dropdown_samples/
+download_fleurs.py
+# 라이선스 서버는 비공개 레포에서 관리
+license-server/

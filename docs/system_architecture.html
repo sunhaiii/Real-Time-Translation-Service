@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>QSTT — C4 Container View</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400;500;600&family=IBM+Plex+Sans+KR:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #ffffff;
+    --surface: #f8fafc;
+    --surface2: #f1f5f9;
+    --border: #e2e8f0;
+    --accent-blue: #2563eb;
+    --accent-cyan: #0891b2;
+    --accent-green: #059669;
+    --accent-orange: #d97706;
+    --accent-purple: #7c3aed;
+    --accent-red: #dc2626;
+    --text-primary: #0f172a;
+    --text-secondary: #475569;
+    --text-dim: #64748b;
+    --glow-blue: rgba(37,99,235,0.08);
+    --glow-cyan: rgba(8,145,178,0.08);
+    --glow-green: rgba(5,150,105,0.08);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text-primary);
+    font-family: 'IBM Plex Mono', monospace;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  .wrapper {
+    position: relative;
+    z-index: 1;
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 40px 32px 80px;
+  }
+
+  .section-label {
+    font-size: 11px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .section-label::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
+  .diagram {
+    display: grid;
+    grid-template-columns: 200px 1fr;
+    grid-template-rows: auto;
+    gap: 0;
+    position: relative;
+    margin-bottom: 48px;
+  }
+
+  .col-users {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    padding-right: 16px;
+  }
+
+  .col-main {
+    display: flex;
+    border-left: 1px solid var(--border);
+    min-width: 0;
+  }
+
+  .col-app {
+    flex: 0 1 50%;
+    max-width: 50%;
+    border-right: 1px solid var(--border);
+    padding: 0 16px 0 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    min-width: 0;
+  }
+
+  .col-external {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    padding: 0 28px 0 16px;
+    width: 250px;
+    flex: 0 0 250px;
+    min-width: 0;
+  }
+
+  .col-header {
+    font-size: 11px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    padding: 8px 12px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    text-align: center;
+    margin-bottom: 8px;
+  }
+
+  .node {
+    border: 1px solid var(--border);
+    background: var(--surface);
+    border-radius: 4px;
+    padding: 16px;
+    position: relative;
+    transition: all 0.2s;
+  }
+  .node:hover {
+    border-color: var(--accent-blue);
+    background: var(--surface2);
+    box-shadow: 0 0 20px rgba(37,99,235,0.08);
+  }
+
+  .node-title {
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .node-icon {
+    width: 24px; height: 24px;
+    border-radius: 3px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13px;
+    flex-shrink: 0;
+  }
+
+  .node-desc {
+    font-size: 11px;
+    color: var(--text-secondary);
+    line-height: 1.7;
+    letter-spacing: 0.03em;
+  }
+
+  .node-tag {
+    display: inline-block;
+    font-size: 10px;
+    padding: 2px 7px;
+    border-radius: 2px;
+    letter-spacing: 0.06em;
+    margin-top: 8px;
+    font-weight: 500;
+  }
+
+  .node.c-blue   { border-color: rgba(37,99,235,0.4);  }
+  .node.c-cyan   { border-color: rgba(8,145,178,0.4);   }
+  .node.c-green  { border-color: rgba(5,150,105,0.4);  }
+  .node.c-orange { border-color: rgba(217,119,6,0.4);  }
+  .node.c-purple { border-color: rgba(124,58,237,0.4);  }
+
+  .node.c-blue   .node-icon { background: rgba(37,99,235,0.12); color: var(--accent-blue); }
+  .node.c-cyan   .node-icon { background: rgba(8,145,178,0.12);  color: var(--accent-cyan); }
+  .node.c-green  .node-icon { background: rgba(5,150,105,0.12); color: var(--accent-green); }
+  .node.c-orange .node-icon { background: rgba(217,119,6,0.12); color: var(--accent-orange); }
+  .node.c-purple .node-icon { background: rgba(124,58,237,0.12); color: var(--accent-purple); }
+
+  .node.c-blue   .node-title { color: var(--accent-blue); }
+  .node.c-cyan   .node-title { color: var(--accent-cyan); }
+  .node.c-green  .node-title { color: var(--accent-green); }
+  .node.c-orange .node-title { color: var(--accent-orange); }
+  .node.c-purple .node-title { color: var(--accent-purple); }
+
+  .node.c-blue   .node-tag { background: rgba(37,99,235,0.1); color: var(--accent-blue); border: 1px solid rgba(37,99,235,0.25); }
+  .node.c-cyan   .node-tag { background: rgba(8,145,178,0.1);  color: var(--accent-cyan);  border: 1px solid rgba(8,145,178,0.25); }
+  .node.c-green  .node-tag { background: rgba(5,150,105,0.1); color: var(--accent-green); border: 1px solid rgba(5,150,105,0.25); }
+  .node.c-orange .node-tag { background: rgba(217,119,6,0.1); color: var(--accent-orange); border: 1px solid rgba(217,119,6,0.25); }
+  .node.c-purple .node-tag { background: rgba(124,58,237,0.1); color: var(--accent-purple); border: 1px solid rgba(124,58,237,0.25); }
+
+  .app-layer {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+
+  .app-box {
+    border: 1px solid var(--border);
+    background: var(--surface);
+    border-radius: 4px;
+    overflow: hidden;
+  }
+
+  .app-box-header {
+    padding: 10px 14px;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .app-box-header .dot {
+    width: 7px; height: 7px;
+    border-radius: 50%;
+  }
+
+  .app-box-body {
+    padding: 14px;
+  }
+
+  .feature-list {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+  }
+
+  .feature-list li {
+    font-size: 11px;
+    color: var(--text-secondary);
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    line-height: 1.5;
+    letter-spacing: 0.02em;
+  }
+
+  .feature-list li::before {
+    content: '—';
+    color: var(--text-dim);
+    flex-shrink: 0;
+    margin-top: 0;
+  }
+
+  .port-badge {
+    font-size: 10px;
+    padding: 1px 6px;
+    border-radius: 2px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    margin-left: auto;
+  }
+
+  .box-frontend .app-box-header { background: rgba(37,99,235,0.06); color: var(--accent-blue); }
+  .box-frontend .dot { background: var(--accent-blue); }
+  .box-frontend .port-badge { background: rgba(37,99,235,0.12); color: var(--accent-blue); }
+  .box-frontend { border-color: rgba(37,99,235,0.3); }
+
+  .box-backend .app-box-header { background: rgba(8,145,178,0.06); color: var(--accent-cyan); }
+  .box-backend .dot { background: var(--accent-cyan); }
+  .box-backend .port-badge { background: rgba(8,145,178,0.12); color: var(--accent-cyan); }
+  .box-backend { border-color: rgba(8,145,178,0.3); }
+
+  .db-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    border: 1px dashed var(--border);
+    padding: 10px 14px;
+    border-radius: 4px;
+    background: rgba(5,150,105,0.04);
+  }
+
+  .db-icon {
+    font-size: 22px;
+  }
+
+  .db-info {
+    flex: 1;
+  }
+
+  .db-name {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--accent-green);
+    letter-spacing: 0.08em;
+  }
+
+  .db-detail {
+    font-size: 11px;
+    color: var(--text-secondary);
+    margin-top: 2px;
+  }
+
+  .db-location {
+    font-size: 10px;
+    color: var(--text-dim);
+    font-style: italic;
+  }
+
+  .mt8 { margin-top: 8px; }
+
+  @media(max-width: 900px) {
+    .diagram { grid-template-columns: 1fr; }
+    .col-main { flex-direction: column; }
+    .col-app { border: none; padding: 0; }
+    .col-users, .col-external { padding: 0; width: auto; }
+    .app-layer { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+<div class="wrapper">
+
+  <div class="section-label">C4 Container View — System Components</div>
+
+  <div class="diagram" style="margin-bottom: 20px;">
+
+    <div class="col-users">
+      <div class="col-header">Users</div>
+
+      <div class="node c-blue">
+        <div class="node-title">
+          <div class="node-icon">👤</div>
+          Counselor
+        </div>
+        <div class="node-desc">
+          채팅 목록 관리<br>
+          클라이언트 언어 설정<br>
+          실시간 번역 수신<br>
+          음성/텍스트 입력 전송
+        </div>
+        <span class="node-tag">Role: Counselor</span>
+      </div>
+
+      <div class="node c-cyan">
+        <div class="node-title">
+          <div class="node-icon">🎙</div>
+          Client
+        </div>
+        <div class="node-desc">
+          언어 선택<br>
+          음성 입력<br>
+          TTS 오디오 재생<br>
+          번역 결과 수신
+        </div>
+        <span class="node-tag">Role: Client</span>
+      </div>
+    </div>
+
+    <div class="col-main">
+    <div class="col-app">
+      <div class="col-header">Application Layer</div>
+
+      <div class="app-layer">
+        <div class="app-box box-frontend">
+          <div class="app-box-header">
+            <div class="dot"></div>
+            Frontend
+            <div class="port-badge">:3000</div>
+          </div>
+          <div class="app-box-body">
+            <ul class="feature-list">
+              <li>역할 선택 (Counselor / Client)</li>
+              <li>채팅 목록 · 메시지 UI</li>
+              <li>WebSocket Client</li>
+              <li>AudioWorklet — PCM 캡처</li>
+              <li>언어 선택 드롭다운</li>
+              <li>TTS 오디오 재생</li>
+            </ul>
+            <div class="mt8">
+              <span class="node-tag" style="background:rgba(37,99,235,0.1);color:var(--accent-blue);border:1px solid rgba(37,99,235,0.25);font-size:10px;padding:3px 8px;">Next.js 14</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="app-box box-backend">
+          <div class="app-box-header">
+            <div class="dot"></div>
+            Backend
+            <div class="port-badge">:8001</div>
+          </div>
+          <div class="app-box-body">
+            <ul class="feature-list">
+              <li>REST API — 채팅 CRUD</li>
+              <li>REST API — 언어 목록</li>
+              <li>REST API — 번역 요청</li>
+              <li>WebSocket 서버</li>
+              <li>세션 기반 브로드캐스트</li>
+              <li>STT / TTS / Gemini 호출</li>
+            </ul>
+            <div class="mt8">
+              <span class="node-tag" style="background:rgba(8,145,178,0.1);color:var(--accent-cyan);border:1px solid rgba(8,145,178,0.25);font-size:10px;padding:3px 8px;">FastAPI</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="db-row">
+        <div class="db-icon">🗄</div>
+        <div class="db-info">
+          <div class="db-name">SQLite · qstt.db</div>
+          <div class="db-detail">채팅 세션 · 메시지 · 언어 설정</div>
+          <div class="db-location">Backend 컨테이너 내부 마운트</div>
+        </div>
+        <span class="node-tag" style="background:rgba(5,150,105,0.1);color:var(--accent-green);border:1px solid rgba(5,150,105,0.25);font-size:10px;padding:3px 8px;margin-top:0;">:memory</span>
+      </div>
+
+      <div class="db-row" style="border-style:dashed;background:rgba(124,58,237,0.04);">
+        <div class="db-icon">🔑</div>
+        <div class="db-info">
+          <div class="db-name" style="color:var(--accent-purple);">Configuration / Security</div>
+          <div class="db-detail">GOOGLE_APPLICATION_CREDENTIALS · GOOGLE_API_KEY</div>
+        </div>
+        <span class="node-tag" style="background:rgba(124,58,237,0.1);color:var(--accent-purple);border:1px solid rgba(124,58,237,0.25);font-size:10px;padding:3px 8px;margin-top:0;">.env</span>
+      </div>
+
+    </div>
+
+    <div class="col-external">
+      <div class="col-header">External Services</div>
+
+      <div class="node c-orange">
+        <div class="node-title">
+          <div class="node-icon">🎤</div>
+          Google STT
+        </div>
+        <div class="node-desc">
+          Cloud Speech-to-Text<br>
+          PCM 스트림 수신<br>
+          실시간 텍스트 변환
+        </div>
+        <span class="node-tag">HTTPS/gRPC</span>
+      </div>
+
+      <div class="node c-orange">
+        <div class="node-title">
+          <div class="node-icon">🔊</div>
+          Google TTS
+        </div>
+        <div class="node-desc">
+          Cloud Text-to-Speech<br>
+          번역 텍스트 → 음성<br>
+          MP3 / LINEAR16 반환
+        </div>
+        <span class="node-tag">HTTPS</span>
+      </div>
+
+      <div class="node c-purple">
+        <div class="node-title">
+          <div class="node-icon">✦</div>
+          Google Gemini
+        </div>
+        <div class="node-desc">
+          LLM 기반 번역<br>
+          텍스트 → 대상 언어<br>
+          다국어 지원
+        </div>
+        <span class="node-tag">REST API</span>
+      </div>
+    </div>
+    </div><!-- /col-main -->
+  </div>
+
+</div>
+</body>
+</html>

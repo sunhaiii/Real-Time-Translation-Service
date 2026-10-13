@@ -1,0 +1,35 @@
+{
+  "name": "translation-system-frontend",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "dev:open": "node scripts/open-browsers.js",
+    "build": "next build",
+    "build:win": "next build",
+    "start": "npx --yes serve@14 out -l 3000",
+    "launch:win": "node scripts/launch-windows-stack.js",
+    "pkg:win": "pkg scripts/launch-windows-stack.js --targets node20-win-x64 --output ../dist/qstt.exe && node scripts/set-exe-windows-gui-subsystem.js ../dist/qstt.exe",
+    "pkg:win:cui": "pkg scripts/launch-windows-stack.js --targets node20-win-x64 --output ../dist/qstt.exe",
+    "lint": "next lint"
+  },
+  "dependencies": {
+    "next": "^14.0.4",
+    "react": "^18.2.0",
+    "react-country-flag": "^3.1.0",
+    "react-dom": "^18.2.0"
+  },
+  "pkg": {
+    "assets": []
+  },
+  "devDependencies": {
+    "@yao-pkg/pkg": "^6.3.0",
+    "@types/node": "^20.10.5",
+    "@types/react": "^18.2.43",
+    "@types/react-dom": "^18.2.17",
+    "autoprefixer": "^10.4.23",
+    "postcss": "^8.5.6",
+    "tailwindcss": "^3.4.19",
+    "typescript": "^5.3.3"
+  }
+}
