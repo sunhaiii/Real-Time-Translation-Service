@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>QSTT Voice Pipeline Data Flow</title>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans+KR:wght@400;500;600&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+  <script>
+    mermaid.initialize({
+      startOnLoad: true,
+      theme: 'base',
+      themeVariables: {
+        primaryColor: '#e0f2fe',
+        primaryTextColor: '#0f172a',
+        primaryBorderColor: '#0ea5e9',
+        lineColor: '#64748b',
+        secondaryColor: '#f1f5f9',
+        tertiaryColor: '#f8fafc'
+      }
+    });
+  </script>
+  <style>
+    :root {
+      --bg: #ffffff;
+      --border: #e2e8f0;
+      --accent-blue: #2563eb;
+      --text-primary: #0f172a;
+      --text-secondary: #475569;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      background: var(--bg);
+      color: var(--text-primary);
+      font-family: 'IBM Plex Sans KR', 'IBM Plex Mono', sans-serif;
+      min-height: 100vh;
+      line-height: 1.6;
+    }
+    .wrapper {
+      max-width: 1000px;
+      margin: 0 auto;
+      padding: 40px 24px 80px;
+    }
+    h2 {
+      font-size: 1.15rem;
+      font-weight: 600;
+      color: var(--accent-blue);
+      margin-bottom: 16px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid var(--border);
+    }
+    p {
+      font-size: 0.9rem;
+      color: var(--text-secondary);
+      margin-bottom: 20px;
+    }
+    .mermaid {
+      margin: 20px 0;
+      display: flex;
+      justify-content: center;
+    }
+    .mermaid svg {
+      max-width: 100%;
+    }
+  </style>
+</head>
+<body>
+  <div class="wrapper">
+    <h2>Voice Pipeline Data Flow</h2>
+    <p>When the counselor or the customer speaks → STT → translation → results are sent to both browsers in the same session. TTS is generated only for counselor speech and played on the customer screen. When an utterance ends, the recording is saved to GCS.</p>
+    <div class="mermaid">
+sequenceDiagram
+    participant Speaker as Speaker browser<br/>(counselor or customer)
+    participant BE as Backend (WebSocket)
+    participant STT as Google STT
+    participant Gemini as Gemini translation
+    participant TTS as Google TTS
+    participant GCS as GCS (recordings)
+    participant DB as SQLite
+    participant Listener as Listener browser
+    Speaker->>BE: audio_stream (chunk: PCM 16kHz base64, sender, chat_id)
+    Note over BE: Speaker lock check (chunks dropped while the other side is speaking)
+    BE->>STT: Streaming audio
+    STT-->>BE: Interim / final results
+    BE-->>Speaker: transcription (interim → finalizing)
+    BE-->>Listener: transcription (same)
+    BE->>Gemini: Finalized source text
+    Gemini-->>BE: Translated text
+    BE-->>Speaker: translation_complete
+    BE-->>Listener: translation_complete
+    Speaker->>BE: POST /api/chats/:id/messages (saved by the speaker only)
+    BE->>DB: Save chat_messages
+    opt Counselor speech only
+        BE->>TTS: Translated text
+        TTS-->>BE: MP3 base64
+        BE-->>Listener: tts_audio (played on customer screen when TTS is on)
+    end
+    Note over Speaker,BE: Utterance ends (is_final)
+    BE->>GCS: Upload recording (WAV)
+    BE->>DB: Save chat_audio_segments (gcs_uri)
+    </div>
+    <p>Note: If server TTS is unavailable, the customer browser's built-in speech synthesis reads the text instead.</p>
+  </div>
+</body>
+</html>

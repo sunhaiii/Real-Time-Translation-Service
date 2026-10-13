@@ -67,34 +67,39 @@
 <body>
   <div class="wrapper">
     <h2>음성 파이프라인 데이터 흐름 (Voice Pipeline)</h2>
-    <p>클라이언트가 말하면 → STT → 번역 → (선택) TTS → 세션 전체에 브로드캐스트되는 흐름입니다.</p>
+    <p>상담원 또는 고객이 말하면 → STT → 번역 → 같은 세션의 두 브라우저에 전송되는 흐름입니다. TTS는 상담원 발화에만 생성되어 고객 화면에서 재생되고, 발화가 끝나면 녹음이 GCS에 저장됩니다.</p>
     <div class="mermaid">
 sequenceDiagram
-    participant Client as 클라이언트 브라우저
-    participant FE as Frontend
-    participant WS as WebSocket
-    participant BE as Backend
+    participant Speaker as 말하는 쪽 브라우저<br/>(상담원 또는 고객)
+    participant BE as Backend (WebSocket)
     participant STT as Google STT
     participant Gemini as Gemini 번역
     participant TTS as Google TTS
-    participant Counselor as 상담자 브라우저
-    Client->>FE: 마이크 PCM (AudioWorklet)
-    FE->>WS: type: audio_stream, data: base64
-    WS->>BE: WebSocket 메시지
+    participant GCS as GCS (녹음)
+    participant DB as SQLite
+    participant Listener as 듣는 쪽 브라우저
+    Speaker->>BE: audio_stream (chunk: PCM 16kHz base64, sender, chat_id)
+    Note over BE: 발화권 잠금 확인 (다른 쪽이 말하는 중이면 청크 무시)
     BE->>STT: 스트리밍 음성
-    STT-->>BE: 인식 텍스트 (원문)
-    BE->>BE: DB에 메시지 저장 (선택)
-    BE->>Gemini: 원문 텍스트
-    Gemini-->>BE: 번역 텍스트
-    opt TTS 사용 시
-        BE->>TTS: 번역 텍스트
+    STT-->>BE: 중간/최종 인식 결과
+    BE-->>Speaker: transcription (interim → finalizing)
+    BE-->>Listener: transcription (동일)
+    BE->>Gemini: 확정 원문
+    Gemini-->>BE: 번역문
+    BE-->>Speaker: translation_complete
+    BE-->>Listener: translation_complete
+    Speaker->>BE: POST /api/chats/:id/messages (말한 쪽만 저장)
+    BE->>DB: chat_messages 저장
+    opt 상담원 발화일 때만
+        BE->>TTS: 번역문
         TTS-->>BE: MP3 base64
+        BE-->>Listener: tts_audio (고객 화면에서 TTS 켜짐 시 재생)
     end
-    BE->>WS: broadcast to session
-    WS->>FE: transcription, translation_complete, tts_audio
-    FE->>Client: 화면 표시 + TTS 재생
-    FE->>Counselor: 동일 메시지 표시 (같은 세션)
+    Note over Speaker,BE: 발화 종료 (is_final)
+    BE->>GCS: 녹음 WAV 업로드
+    BE->>DB: chat_audio_segments (gcs_uri) 저장
     </div>
+    <p>참고: 서버 TTS를 사용할 수 없으면 고객 브라우저의 내장 음성 합성으로 대신 읽어줍니다.</p>
   </div>
 </body>
 </html>

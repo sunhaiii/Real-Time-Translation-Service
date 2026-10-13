@@ -83,8 +83,8 @@
   }
 
   .col-app {
-    flex: 0 1 50%;
-    max-width: 50%;
+    flex: 1 1 auto;
+    max-width: none;
     border-right: 1px solid var(--border);
     padding: 0 16px 0 16px;
     display: flex;
@@ -301,6 +301,25 @@
     font-style: italic;
   }
 
+
+  .box-launcher .app-box-header { background: rgba(217,119,6,0.06); color: var(--accent-orange); }
+  .box-launcher .dot { background: var(--accent-orange); }
+  .box-launcher .port-badge { background: rgba(217,119,6,0.12); color: var(--accent-orange); }
+  .box-launcher { border-color: rgba(217,119,6,0.3); grid-column: 1 / -1; }
+
+  .node.c-red { border-color: rgba(220,38,38,0.4); }
+  .node.c-red .node-icon { background: rgba(220,38,38,0.12); color: var(--accent-red); }
+  .node.c-red .node-title { color: var(--accent-red); }
+  .node.c-red .node-tag { background: rgba(220,38,38,0.1); color: var(--accent-red); border: 1px solid rgba(220,38,38,0.25); }
+
+  .tag-row { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+  .tag-row .node-tag { margin-top: 0; font-size: 10px; padding: 3px 8px; }
+
+  .deploy-table { width: 100%; border-collapse: collapse; font-size: 11px; color: var(--text-secondary); }
+  .deploy-table th, .deploy-table td { border: 1px solid var(--border); padding: 8px 12px; text-align: left; vertical-align: top; line-height: 1.6; }
+  .deploy-table th { background: var(--surface); color: var(--text-primary); font-weight: 600; letter-spacing: 0.06em; }
+  .table-scroll { overflow-x: auto; }
+
   .mt8 { margin-top: 8px; }
 
   @media(max-width: 900px) {
@@ -328,12 +347,14 @@
           Counselor
         </div>
         <div class="node-desc">
-          채팅 목록 관리<br>
-          클라이언트 언어 설정<br>
-          실시간 번역 수신<br>
-          음성/텍스트 입력 전송
+          상담방(채팅) 목록 관리<br>
+          고객 언어 · 도메인 설정<br>
+          음성/텍스트 입력<br>
+          고객 마이크 배정 · 테스트<br>
+          고객 TTS · 글자 크기 제어<br>
+          도메인 용어 사전 편집
         </div>
-        <span class="node-tag">Role: Counselor</span>
+        <span class="node-tag">Chrome kiosk · 1번 모니터</span>
       </div>
 
       <div class="node c-cyan">
@@ -344,18 +365,38 @@
         <div class="node-desc">
           언어 선택<br>
           음성 입력<br>
-          TTS 오디오 재생<br>
-          번역 결과 수신
+          번역 결과 수신<br>
+          상담원 발화 TTS 재생
         </div>
-        <span class="node-tag">Role: Client</span>
+        <span class="node-tag">Chrome kiosk · 2번 모니터</span>
       </div>
     </div>
 
     <div class="col-main">
     <div class="col-app">
-      <div class="col-header">Application Layer</div>
+      <div class="col-header">Application Layer · 고객 PC (Windows)</div>
 
       <div class="app-layer">
+        <div class="app-box box-launcher">
+          <div class="app-box-header">
+            <div class="dot"></div>
+            Launcher (qstt.exe)
+            <div class="port-badge">:3000 정적 서버</div>
+          </div>
+          <div class="app-box-body">
+            <ul class="feature-list">
+              <li>라이선스 검증 → 런타임 설정을 환경변수로 백엔드에 전달</li>
+              <li>Backend 실행 (backend.exe 또는 main.py)</li>
+              <li>Next.js 정적 빌드(out/)를 :3000으로 서빙</li>
+              <li>Chrome kiosk 창 2개 실행 (상담원 / 고객, 별도 프로필)</li>
+              <li>exe 유효기간 만료 검사</li>
+            </ul>
+            <div class="tag-row">
+              <span class="node-tag" style="background:rgba(217,119,6,0.1);color:var(--accent-orange);border:1px solid rgba(217,119,6,0.25);">Node.js · pkg</span>
+            </div>
+          </div>
+        </div>
+
         <div class="app-box box-frontend">
           <div class="app-box-header">
             <div class="dot"></div>
@@ -364,15 +405,18 @@
           </div>
           <div class="app-box-body">
             <ul class="feature-list">
-              <li>역할 선택 (Counselor / Client)</li>
+              <li>상담원 / 고객 화면 (URL 파라미터로 역할 구분)</li>
               <li>채팅 목록 · 메시지 UI</li>
+              <li>AudioWorklet — PCM 16kHz 캡처</li>
               <li>WebSocket Client</li>
-              <li>AudioWorklet — PCM 캡처</li>
-              <li>언어 선택 드롭다운</li>
-              <li>TTS 오디오 재생</li>
+              <li>마이크 장치 자동 배정 (proton 규칙)</li>
+              <li>발화권 표시 (speaking_state)</li>
+              <li>TTS 재생 (서버 MP3, 없으면 브라우저 TTS)</li>
+              <li>메시지 저장 요청 (말한 쪽만)</li>
+              <li>라이선스 등급 A: 언어 목록 제한</li>
             </ul>
-            <div class="mt8">
-              <span class="node-tag" style="background:rgba(37,99,235,0.1);color:var(--accent-blue);border:1px solid rgba(37,99,235,0.25);font-size:10px;padding:3px 8px;">Next.js 14</span>
+            <div class="tag-row">
+              <span class="node-tag" style="background:rgba(37,99,235,0.1);color:var(--accent-blue);border:1px solid rgba(37,99,235,0.25);">Next.js 14 · static export</span>
             </div>
           </div>
         </div>
@@ -385,15 +429,19 @@
           </div>
           <div class="app-box-body">
             <ul class="feature-list">
-              <li>REST API — 채팅 CRUD</li>
-              <li>REST API — 언어 목록</li>
-              <li>REST API — 번역 요청</li>
-              <li>WebSocket 서버</li>
-              <li>세션 기반 브로드캐스트</li>
-              <li>STT / TTS / Gemini 호출</li>
+              <li>REST — 채팅 · 메시지 · 녹음 목록</li>
+              <li>REST — 도메인 용어 사전</li>
+              <li>REST — 언어 목록 · 번역 · 라이선스 등급</li>
+              <li>REST — kiosk Chrome 최소화 / 종료</li>
+              <li>WebSocket /ws/{session_id} — 세션 브로드캐스트</li>
+              <li>스트리밍 STT · 중복 제거 · 용어 보정</li>
+              <li>발화권 잠금 (동시 발화 차단)</li>
+              <li>Gemini 번역 · 상담원 발화 TTS</li>
+              <li>발화 녹음 WAV → GCS 업로드</li>
             </ul>
-            <div class="mt8">
-              <span class="node-tag" style="background:rgba(8,145,178,0.1);color:var(--accent-cyan);border:1px solid rgba(8,145,178,0.25);font-size:10px;padding:3px 8px;">FastAPI</span>
+            <div class="tag-row">
+              <span class="node-tag" style="background:rgba(8,145,178,0.1);color:var(--accent-cyan);border:1px solid rgba(8,145,178,0.25);">FastAPI · Python</span>
+              <span class="node-tag" style="background:rgba(8,145,178,0.1);color:var(--accent-cyan);border:1px solid rgba(8,145,178,0.25);">PyInstaller</span>
             </div>
           </div>
         </div>
@@ -403,19 +451,20 @@
         <div class="db-icon">🗄</div>
         <div class="db-info">
           <div class="db-name">SQLite · qstt.db</div>
-          <div class="db-detail">채팅 세션 · 메시지 · 언어 설정</div>
-          <div class="db-location">Backend 컨테이너 내부 마운트</div>
+          <div class="db-detail">chat_sessions · chat_messages · chat_audio_segments · word_dictionary</div>
+          <div class="db-location">backend.exe(또는 backend 폴더)와 같은 위치의 파일 · 고객명 · 대화 원문 포함</div>
         </div>
-        <span class="node-tag" style="background:rgba(5,150,105,0.1);color:var(--accent-green);border:1px solid rgba(5,150,105,0.25);font-size:10px;padding:3px 8px;margin-top:0;">:memory</span>
+        <span class="node-tag" style="background:rgba(5,150,105,0.1);color:var(--accent-green);border:1px solid rgba(5,150,105,0.25);font-size:10px;padding:3px 8px;margin-top:0;">file</span>
       </div>
 
       <div class="db-row" style="border-style:dashed;background:rgba(124,58,237,0.04);">
         <div class="db-icon">🔑</div>
         <div class="db-info">
           <div class="db-name" style="color:var(--accent-purple);">Configuration / Security</div>
-          <div class="db-detail">GOOGLE_APPLICATION_CREDENTIALS · GOOGLE_API_KEY</div>
+          <div class="db-detail">GOOGLE_API_KEY · GOOGLE_APPLICATION_CREDENTIALS · STT_ENGINE · GCS_AUDIO_BUCKET</div>
+          <div class="db-location">exe 배포: 라이선스 서버에서 수신 (파일 없음) · 개발/Docker: .env + credentials.json</div>
         </div>
-        <span class="node-tag" style="background:rgba(124,58,237,0.1);color:var(--accent-purple);border:1px solid rgba(124,58,237,0.25);font-size:10px;padding:3px 8px;margin-top:0;">.env</span>
+        <span class="node-tag" style="background:rgba(124,58,237,0.1);color:var(--accent-purple);border:1px solid rgba(124,58,237,0.25);font-size:10px;padding:3px 8px;margin-top:0;">env</span>
       </div>
 
     </div>
@@ -430,10 +479,11 @@
         </div>
         <div class="node-desc">
           Cloud Speech-to-Text<br>
-          PCM 스트림 수신<br>
-          실시간 텍스트 변환
+          v1 (global, latest_long) 기본<br>
+          v2 (Chirp 3) 전환 가능<br>
+          PhraseSet 도메인 적응
         </div>
-        <span class="node-tag">HTTPS/gRPC</span>
+        <span class="node-tag">gRPC streaming</span>
       </div>
 
       <div class="node c-orange">
@@ -443,10 +493,10 @@
         </div>
         <div class="node-desc">
           Cloud Text-to-Speech<br>
-          번역 텍스트 → 음성<br>
-          MP3 / LINEAR16 반환
+          상담원 번역문 → 음성<br>
+          MP3 반환
         </div>
-        <span class="node-tag">HTTPS</span>
+        <span class="node-tag">gRPC</span>
       </div>
 
       <div class="node c-purple">
@@ -456,13 +506,68 @@
         </div>
         <div class="node-desc">
           LLM 기반 번역<br>
-          텍스트 → 대상 언어<br>
-          다국어 지원
+          gemini-2.5-flash-lite 기본<br>
+          도메인 문맥 반영
         </div>
-        <span class="node-tag">REST API</span>
+        <span class="node-tag">REST · API key</span>
+      </div>
+
+      <div class="node c-green">
+        <div class="node-title">
+          <div class="node-icon">☁</div>
+          Cloud Storage
+        </div>
+        <div class="node-desc">
+          발화 녹음 WAV 보관<br>
+          URI는 SQLite에 기록
+        </div>
+        <span class="node-tag">GCS</span>
+      </div>
+
+      <div class="node c-red">
+        <div class="node-title">
+          <div class="node-icon">🛡</div>
+          License Server
+        </div>
+        <div class="node-desc">
+          라이선스 키 · 기기 수 · 만료 검증<br>
+          런타임 설정 암호화 전달<br>
+          관리자 화면 · 요청 횟수 제한
+        </div>
+        <span class="node-tag">Fastify · HTTPS · 비공개</span>
       </div>
     </div>
     </div><!-- /col-main -->
+  </div>
+
+  <div class="section-label" style="margin-top: 40px;">Deployment Modes</div>
+
+  <div class="table-scroll">
+    <table class="deploy-table">
+      <thead>
+        <tr><th>모드</th><th>구성</th><th>설정 · 키</th><th>라이선스</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Windows 배포 (qstt.exe)</td>
+          <td>Launcher가 backend.exe와 정적 프론트(:3000)를 실행하고 Chrome kiosk 창 2개를 엶</td>
+          <td>라이선스 서버 응답으로 받아 환경변수로 주입</td>
+          <td>필요 (키는 레지스트리에 저장)</td>
+        </tr>
+        <tr>
+          <td>개발 실행</td>
+          <td>uvicorn :8001 + Next.js dev :3000</td>
+          <td>backend/.env + credentials.json</td>
+          <td>건너뜀</td>
+        </tr>
+        <tr>
+          <td>Docker Compose</td>
+          <td>backend(:8001) · frontend(:3000) 컨테이너</td>
+          <td>루트 .env → GOOGLE_API_KEY, backend/.env 마운트</td>
+          <td>건너뜀</td>
+        </tr>
+      </tbody>
+    </table>
   </div>
 
 </div>

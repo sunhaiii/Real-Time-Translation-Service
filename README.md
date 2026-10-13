@@ -1,5 +1,7 @@
 # 🌍 실시간 통역 시스템 (Real-time Translation System)
 
+[English](README_eng.md) | **한국어**
+
 한국 상담사와 외국인 고객 간의 실시간 음성 통역 서비스
 
 ---
@@ -59,7 +61,56 @@ cd qstt
 - **Frontend**: Next.js 14 + TypeScript + Tailwind CSS
 - **STT/TTS**: Google Cloud API
 - **Translation**: Google Gemini API (`gemini-2.5-flash-lite`)
-- **Deployment**: Docker + Docker Compose
+- **Recording**: Google Cloud Storage (발화 녹음 WAV)
+- **Deployment**: Docker + Docker Compose / Windows 실행 파일 (pkg + PyInstaller)
+
+---
+
+## 🏗️ 시스템 구조
+
+```mermaid
+flowchart LR
+  U["상담원 · 고객 화면<br/>Chrome kiosk 창 2개"]
+  L["Launcher<br/>qstt.exe"]
+  FE["Frontend<br/>Next.js 정적 빌드 :3000"]
+  BE["Backend<br/>FastAPI :8001"]
+  LS["License Server"]
+  DB[("SQLite<br/>qstt.db")]
+  STT["Google STT<br/>v1 / v2 Chirp 3"]
+  GEM["Gemini 번역"]
+  TTS["Google TTS"]
+  GCS[("Cloud Storage<br/>녹음 WAV")]
+
+  U -->|HTTP| FE
+  U <-->|WebSocket| BE
+  L -.->|서빙| FE
+  L -.->|실행| BE
+  L -.->|라이선스 검증| LS
+  BE --> DB
+  BE -->|스트리밍 음성| STT
+  BE -->|원문| GEM
+  BE -->|상담원 발화 번역문| TTS
+  BE -->|발화 녹음| GCS
+
+  classDef local fill:#e0f2fe,stroke:#0284c7,color:#0f172a
+  classDef cloud fill:#fef3c7,stroke:#d97706,color:#0f172a
+  classDef user fill:#ede9fe,stroke:#7c3aed,color:#0f172a
+  class L,FE,BE,DB local
+  class LS,STT,GEM,TTS,GCS cloud
+  class U user
+```
+
+파란색은 고객 PC에서 실행되는 구성 요소, 주황색은 외부 서비스입니다.
+
+- **상담원 · 고객 화면**: 같은 세션의 WebSocket에 연결됩니다. 한쪽이 말하면 STT → 번역 결과가 양쪽 화면에 동시에 표시됩니다.
+- **TTS**: 상담원 발화에만 생성되며, 고객 화면에서 TTS가 켜져 있을 때 재생됩니다.
+- **Launcher**: Windows 배포용 실행 파일입니다. 라이선스를 검증한 뒤 백엔드와 정적 프론트를 띄우고 Chrome kiosk 창 2개를 엽니다. 개발·Docker 실행에서는 사용하지 않습니다.
+
+자세한 다이어그램:
+- [시스템 구성도](docs/system_architecture.html) — 구성 요소별 역할과 배포 모드
+- [음성 파이프라인 데이터 흐름](docs/data-flow-diagram.html) ([English](docs/data-flow-diagram_eng.html))
+
+> GitHub에서는 HTML이 렌더링되지 않으므로 파일을 내려받아 브라우저로 열어 주세요.
 
 ---
 
@@ -73,8 +124,10 @@ qstt/
 ├── .gitignore
 ├── .env                        # 환경 변수 (생성 필요, Git 제외)
 ├── README.md
+├── README_eng.md
 ├── docs/                       # 다이어그램·참고 문서
 │   ├── data-flow-diagram.html
+│   ├── data-flow-diagram_eng.html
 │   ├── figma-vs-frontend-counselor-chat.md
 │   └── system_architecture.html
 └── app_root/
@@ -91,6 +144,7 @@ qstt/
     │   ├── services/
     │   │   ├── __init__.py
     │   │   ├── database.py
+    │   │   ├── storage.py
     │   │   ├── translator.py
     │   │   ├── stt.py
     │   │   └── tts.py
@@ -106,14 +160,15 @@ qstt/
         ├── tailwind.config.ts
         ├── tsconfig.json
         ├── README.md
-        ├── MIGRATION.md
         ├── .dockerignore
         ├── public/               # logo, worklets 등 정적 자산
-        ├── scripts/
+        ├── scripts/              # Windows 런처 (qstt.exe)
         │   ├── chrome-launch-shared.js
         │   ├── launch-windows-stack.js
+        │   ├── license-client.js
         │   ├── open-browsers.js
-        │   └── set-exe-windows-gui-subsystem.js
+        │   ├── set-exe-windows-gui-subsystem.js
+        │   └── write-launcher-expiry.js
         └── src/
             ├── app/
             ├── components/
